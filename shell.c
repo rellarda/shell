@@ -17,6 +17,8 @@
 
 void shell();
 void shell_cycle();
+void process_command(char command[]);
+void print_cwd();
 
 int main(void) {
   shell();
@@ -30,7 +32,33 @@ void shell() {
 }
 
 void shell_cycle() {
+  char command[1024];
+  for (;;) {
+    print_cwd();
+    fgets(command, sizeof(command), stdin);
+    process_command(command);
+  }
 
+  return;
+}
+
+void process_command(char command[]) {
+  char *tokens[10];
+
+  int count = 0;
+  char *token = strtok(command, " ");
+  while (token != NULL && count < 10) {
+    tokens[count++] = token;
+    token = strtok(NULL, " ");
+  }
+
+  for (int i = 0; i < count; i++) {
+    printf("Token %d: %s\n", i, tokens[i]);
+  };
+  return;
+}
+
+void print_cwd() {
   char cwd[256];
   if (getcwd(cwd, sizeof(cwd))) {
     printf("%s%s %s$%s\n", CYAN, cwd, MAGENTA, RESET);
@@ -38,27 +66,4 @@ void shell_cycle() {
     perror("getcwd() error");
     return;
   }
-
-  char command[1024];
-
-  for (;;) {
-    fgets(command, sizeof(command), stdin);
-    command[strcspn(command, "\n")] = '\0';
-
-    if (strcmp(command, "start") == 0) {
-      printf("Запуск программы...\n");
-    } else if (strcmp(command, "stop") == 0) {
-      printf("Остановка программы...\n");
-    } else if (strcmp(command, "help") == 0) {
-      printf("Справка: ...\n");
-    } else if (strcmp(command, "exit") == 0) {
-      return;
-    } else {
-      printf("Неизвестная команда!\n");
-    }
-
-    printf("%s%s %s$%s\n", CYAN, cwd, MAGENTA, RESET);
-  }
-
-  return;
 }
