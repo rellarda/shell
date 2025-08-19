@@ -19,6 +19,8 @@ void shell();
 void shell_cycle();
 void process_command(char command[]);
 void print_cwd();
+void handle_cd(char *tokens[]);
+void clear_terminal();
 
 int main(void) {
   shell();
@@ -26,7 +28,7 @@ int main(void) {
 }
 
 void shell() {
-  system("clear");
+  clear_terminal();
   shell_cycle();
   return;
 }
@@ -55,19 +57,33 @@ void process_command(char command[]) {
   }
   tokens[count] = NULL;
 
+  if (strcmp(tokens[0], "cd") == 0) {
+    handle_cd(tokens);
+    return;
+  }
+
+  if (strcmp(tokens[0], "clear") == 0) {
+    clear_terminal();
+    return;
+  }
+
+  if (strcmp(tokens[0], "exit") == 0) {
+    exit(0);
+  }
+
   pid_t pid = fork();
   if (pid == -1) {
     perror("fork failed");
     exit(1);
   }
 
-  if (pid == 0) {              // Дочерний процесс
-    execvp(tokens[0], tokens); // Запускаем команду
-    perror("execvp failed");   // Если execvp вернул ошибку
+  if (pid == 0) {
+    execvp(tokens[0], tokens);
+    perror("execvp failed");
     exit(1);
-  } else { // Родительский процесс
+  } else {
     int status;
-    waitpid(pid, &status, 0); // Ждём завершения
+    waitpid(pid, &status, 0);
   }
 
   return;
@@ -81,4 +97,22 @@ void print_cwd() {
     perror("getcwd() error");
     return;
   }
+}
+
+void handle_cd(char *tokens[]) {
+  char *path;
+  if (tokens[1] == NULL) {
+    path = getenv("HOME");
+  } else {
+    path = tokens[1];
+  }
+
+  chdir(path);
+
+  return;
+}
+
+void clear_terminal() {
+    printf("\033[2J\033[H");
+    fflush(stdout);  
 }
